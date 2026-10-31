@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PTT 二手相機 (DC_SALE) 搜尋小工具</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Hide scrollbar for brand filter */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+  <!-- Top Navigation / Search Header -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#0d1322]/90 border-b border-slate-800/80 shadow-2xl shadow-black/40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <!-- Brand / Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">PTT 二手相機 (DC_SALE) 搜尋小工具</h1>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                純深色版
+              </span>
+            </div>
+            <!-- Last updated time display -->
+            <p class="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5 mt-0.5">
+              <svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>最後更新時間：</span>
+              <span id="updated-time" class="font-mono font-medium text-indigo-300">載入中...</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Action / Count Badge -->
+        <div class="flex items-center gap-2.5">
+          <span id="result-count" class="text-xs sm:text-sm px-3 py-1.5 rounded-xl bg-slate-800/90 text-slate-300 border border-slate-700/70 font-mono font-medium shadow-inner">
+            載入中...
+          </span>
+          <button id="refresh-btn" type="button" title="重新載入資料"
+            class="px-3 py-1.5 rounded-xl border border-slate-700/70 bg-slate-800/90 hover:bg-slate-700/80 text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs font-medium">
+            <svg id="refresh-icon" class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>重新整理</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative mb-3">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z" />
+          </svg>
+        </div>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="即時搜尋型號、焦段、品牌（例如：A7C、20-40、55mm、Nikon、Canon、富士、GR3）..."
+          class="w-full pl-11 pr-10 py-2.5 rounded-xl bg-slate-900/95 border border-slate-700/80 text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500 transition shadow-inner"
+        />
+        <button id="clear-search" type="button" class="hidden absolute inset-y-0 right-0 pr-3.5 items-center text-slate-500 hover:text-slate-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick Brand Filter Buttons -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="brand-filters">
+        <button type="button" data-brand="ALL" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-500">
+          全部
+        </button>
+        <button type="button" data-brand="Sony" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700">
+          Sony
+        </button>
+        <button type="button" data-brand="Nikon" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700">
+          Nikon
+        </button>
+        <button type="button" data-brand="Canon" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700">
+          Canon
+        </button>
+        <button type="button" data-brand="Fujifilm" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700">
+          Fujifilm
+        </button>
+        <button type="button" data-brand="Ricoh" class="brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700">
+          Ricoh / GR
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+    <!-- Loading State -->
+    <div id="loading-state" class="py-20 text-center">
+      <div class="inline-block w-9 h-9 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p class="text-slate-400 text-sm">正在載入最新二手相機資訊...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden py-16 text-center bg-slate-900/80 rounded-2xl border border-slate-800 p-8 shadow-xl">
+      <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p class="text-base font-semibold text-slate-200 mb-1">找不到符合條件的文章</p>
+      <p class="text-sm text-slate-400">請嘗試更換搜尋關鍵字或切換品牌篩選</p>
+    </div>
+
+    <!-- Articles Grid -->
+    <div id="articles-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </main>
+
+  <!-- Pure Dark Footer with update time note -->
+  <footer class="mt-auto border-t border-slate-800/80 bg-[#0d1322]/80 backdrop-blur-sm py-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span>資料來源：<a href="https://www.ptt.cc/bbs/DC_SALE/index.html" target="_blank" rel="noopener noreferrer" class="underline text-indigo-400 hover:text-indigo-300">PTT DC_SALE 看板</a></span>
+        <span>·</span>
+        <span>點擊卡片直接前往 PTT 原文</span>
+      </div>
+      <div class="text-slate-400 font-mono text-[11px]">
+        系統更新時間戳記：<span id="footer-updated-time">--</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const BRAND_KEYWORDS = {
+      ALL: [],
+      Sony: ['sony', 'a7', 'a6', 'a9', 'a1', 'zv-', 'zve', 'rx100', 'fx3', 'fx30', 'fe ', 'fe2', 'fe1', 'fe3', 'fe4', 'fe5', 'fe7', 'fe8', 'sel', 'gm'],
+      Nikon: ['nikon', 'nikkor', 'z5', 'z6', 'z7', 'z8', 'z9', 'zf', 'zfc', 'z30', 'd750', 'd850', 'd6'],
+      Canon: ['canon', 'eos', 'r5', 'r6', 'r7', 'r8', 'r10', 'r50', 'rf', 'ef', '5d', '6d'],
+      Fujifilm: ['fujifilm', 'fuji', '富士', 'x-t', 'xt', 'x-s', 'xs', 'x-h', 'xh', 'x100', 'x-e', 'xe', 'x-m', 'xm', 'xf', 'gfx'],
+      Ricoh: ['ricoh', 'gr', 'gr3', 'gr3x', 'gr2', 'gr ii', 'gr iii', '理光']
+    };
+
+    let allArticles = [];
+    let currentBrand = 'ALL';
+    let currentKeyword = '';
+
+    const updatedTimeEl = document.getElementById('updated-time');
+    const footerUpdatedTimeEl = document.getElementById('footer-updated-time');
+    const resultCountEl = document.getElementById('result-count');
+    const searchInput = document.getElementById('search-input');
+    const clearSearchBtn = document.getElementById('clear-search');
+    const brandBtns = document.querySelectorAll('.brand-btn');
+    const articlesGrid = document.getElementById('articles-grid');
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const refreshIcon = document.getElementById('refresh-icon');
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function matchesBrand(article, brand) {
+      if (brand === 'ALL') return true;
+      const text = `${article.title}`.toLowerCase();
+      const keywords = BRAND_KEYWORDS[brand] || [brand.toLowerCase()];
+      return keywords.some(kw => text.includes(kw));
+    }
+
+    function matchesKeyword(article, query) {
+      if (!query.trim()) return true;
+      const hay = `${article.title} ${article.price || ''} ${article.date || ''}`.toLowerCase();
+      const tokens = query.toLowerCase().trim().split(/\s+/);
+      return tokens.every(token => hay.includes(token));
+    }
+
+    function renderArticles() {
+      const filtered = allArticles.filter(
+        art => matchesBrand(art, currentBrand) && matchesKeyword(art, currentKeyword)
+      );
+
+      resultCountEl.textContent = `共 ${filtered.length} 篇販售文章`;
+
+      if (filtered.length === 0) {
+        articlesGrid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      articlesGrid.innerHTML = filtered.map(art => {
+        const isSold = /售出|已售/.test(art.title) || /售出|已售/.test(art.price || '');
+        const priceDisplay = escapeHtml(art.price || '請洽內文');
+        const titleDisplay = escapeHtml(art.title);
+        const dateDisplay = escapeHtml(art.date || '');
+        const urlDisplay = escapeHtml(art.url || '#');
+
+        return `
+          <a href="${urlDisplay}" target="_blank" rel="noopener noreferrer"
+             class="group flex flex-col justify-between rounded-2xl bg-slate-900/90 border border-slate-800/90 hover:border-indigo-500/60 p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-950/40 hover:-translate-y-0.5 transition-all duration-200">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2.5">
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-md ${
+                  isSold
+                    ? 'bg-slate-800 text-slate-400 border border-slate-700/60'
+                    : 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/60'
+                }">
+                  <span class="w-1.5 h-1.5 rounded-full ${isSold ? 'bg-slate-500' : 'bg-emerald-400 animate-pulse'}"></span>
+                  ${isSold ? '已售出/洽中' : '販售中'}
+                </span>
+                <span class="text-xs text-slate-400 font-mono flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  ${dateDisplay}
+                </span>
+              </div>
+              <h2 class="text-base font-semibold leading-snug text-slate-100 group-hover:text-indigo-400 transition-colors line-clamp-2 mb-4">
+                ${titleDisplay}
+              </h2>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/90 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <span class="block text-[11px] text-slate-400 font-medium">預估售價</span>
+                <span class="block text-sm font-bold text-emerald-400 truncate font-mono" title="${priceDisplay}">
+                  💰 ${priceDisplay}
+                </span>
+              </div>
+              <span class="shrink-0 inline-flex items-center text-xs font-medium text-slate-400 group-hover:text-indigo-400 transition">
+                前往 PTT
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-0.5 transform group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </span>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function loadData() {
+      loadingState.classList.remove('hidden');
+      refreshIcon.classList.add('animate-spin');
+
+      fetch('./data.json?t=' + Date.now())
+        .then(res => {
+          if (!res.ok) throw new Error('無法讀取 data.json');
+          return res.json();
+        })
+        .then(data => {
+          loadingState.classList.add('hidden');
+          refreshIcon.classList.remove('animate-spin');
+          allArticles = Array.isArray(data) ? data : (data.articles || []);
+          const updatedTime = data.updated_at || '剛剛';
+          updatedTimeEl.textContent = updatedTime;
+          footerUpdatedTimeEl.textContent = updatedTime;
+          renderArticles();
+        })
+        .catch(err => {
+          loadingState.classList.remove('hidden');
+          refreshIcon.classList.remove('animate-spin');
+          loadingState.innerHTML = `<p class="text-rose-400 text-sm">載入資料失敗：${escapeHtml(err.message)}</p>`;
+        });
+    }
+
+    // Search event
+    searchInput.addEventListener('input', (e) => {
+      currentKeyword = e.target.value;
+      if (currentKeyword) {
+        clearSearchBtn.classList.remove('hidden');
+        clearSearchBtn.classList.add('flex');
+      } else {
+        clearSearchBtn.classList.add('hidden');
+        clearSearchBtn.classList.remove('flex');
+      }
+      renderArticles();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      currentKeyword = '';
+      clearSearchBtn.classList.add('hidden');
+      clearSearchBtn.classList.remove('flex');
+      searchInput.focus();
+      renderArticles();
+    });
+
+    // Brand filter events
+    brandBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentBrand = btn.getAttribute('data-brand');
+        brandBtns.forEach(b => {
+          if (b === btn) {
+            b.className = 'brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-indigo-600 text-white shadow-md shadow-indigo-600/30 border border-indigo-500';
+          } else {
+            b.className = 'brand-btn shrink-0 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition bg-slate-900/80 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white hover:border-slate-700';
+          }
+        });
+        renderArticles();
+      });
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      loadData();
+    });
+
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>

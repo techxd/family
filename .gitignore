@@ -1,0 +1,26 @@
+# 依賴套件
+node_modules/
+.pnp
+.pnp.js
+
+# 部署與本地配置快取
+.vercel/
+.next/
+out/
+build/
+dist/
+
+# 環境變數與機密資訊
+.env
+.env*.local
+.env.production
+.env.development
+
+# 日誌與系統檔
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
